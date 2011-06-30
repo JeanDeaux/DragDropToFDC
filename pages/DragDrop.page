@@ -1,0 +1,154 @@
+<apex:page standardStylesheets="false"
+    sidebar="false"
+    showHeader="false"
+    contentType="text/html" cache="true"><apex:outputText escape="false" value="{!"<!DOCTYPE html>"}"/>
+<html>
+    <head>
+        <title>DragDrop</title>
+        <apex:includeScript value="{!URLFOR($Resource.Modernizr)}" />
+        <style type="text/css">
+            #loading{
+                width: 25%;
+                float:left;
+            }
+            
+            #loading ul{
+                list-style:none;
+            }
+
+            #dropTarget{
+              border: dashed 1px black;
+              height: 400px;
+              width: 50%;
+              margin:auto;
+              text-align: center;
+            }
+            
+            #dropTarget p{
+            }
+            
+            .hover{
+              border: dashed 1px red !important;   
+            }
+            
+        </style>
+    </head>
+    <body>
+        
+        <div id="loading">
+            <ul id="fileList">
+                
+            </ul>
+        </div>
+        <div id="dropTarget">
+            <p>Drop something here</p>
+        </div>
+        
+        
+        <script src="../../soap/ajax/20.0/connection.js" type="text/javascript"></script>
+        <script src="../../soap/ajax/20.0/apex.js" type="text/javascript"></script>
+        <apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js" />
+        <script>
+            var _fileList = $("#fileList");
+            var __sfdcSessionId = '{!GETSESSIONID()}'; 
+            
+            function log(msg){ 
+                try{ console.log(msg); }catch(x){} 
+            }
+                    
+            function loadFile(f){
+                
+                sforce.connection.sessionId = '{!$Api.Session_ID}'; 
+                
+                var fileListItem = $('<li>'+f.name+' <span class="progress"></span><img class="loading" src="{!URLFOR($Resource.LoadingImage)}" alt="loading" ></img></li>');
+                _fileList.append(fileListItem);
+                
+                var reader = new FileReader();
+
+                reader.onerror = function(evt){
+                    
+                    switch(evt.target.error.code) {
+                         case evt.target.error.NOT_FOUND_ERR:
+                               fileListItem.find('.progress').text('File Not Found!');
+                         break;
+                         case evt.target.error.NOT_READABLE_ERR:
+                                fileListItem.find('.progress').text('File Not Readable!');
+                         break;
+                         case evt.target.error.ABORT_ERR:
+                                fileListItem.find('.progress').text('Aborted!');
+                         break;
+                         default:
+                               fileListItem.find('.progress').text('Unknown error!');
+                    };
+                };
+                
+                reader.onprogress = function(evt){
+
+                    if (evt.lengthComputable) {
+                        var percentLoaded = Math.round((evt.loaded / evt.total) * 100);
+                        console.log(percentLoaded);
+                        // Increase the progress bar length.
+                        if (percentLoaded < 100) {
+                            fileListItem.find('.progress').text( percentLoaded + '%');
+                        }
+                    }
+                };
+                
+                reader.onloadstart = function(e) {
+                    
+                    fileListItem.find('.progress').text('0%');
+                    fileListItem.find('.loading').show();
+                };
+                
+                reader.onload = function(e) {
+                    var progress = fileListItem.find('.progress');
+                    progress.text('100%');
+                    fileListItem.find('.loading').hide();
+                    
+                    try{
+                        newAttachmentId = sforce.apex.execute("FileAttachmentService","createFileAttachment", { fileName: f.name, fileContent: e.target.result });
+                        log('Attachment Id: ' + newAttachmentId);
+                        progress.html('<a target="_blank" href="/' + newAttachmentId + '">[View Attachment]</a>');
+                    }catch(x){
+                        log(x);
+                    }
+                }
+
+                reader.readAsBinaryString(f);  
+            }
+            
+       
+            $(document).ready(function() {
+                   
+                if (Modernizr.draganddrop) {
+                  
+                  var target = $('#dropTarget');
+                  target.bind('dragover', function () { $(this).addClass('hover'); return false; });
+                  target.bind('dragend, dragleave', function () { $(this).removeClass('hover'); return false; });
+                  target.bind('drop', function (e) {
+                    
+                      $(this).removeClass('hover');
+                      e.preventDefault();
+                    
+                      if (window.File && window.FileList && window.FileReader){
+                          
+                          var files = e.originalEvent.dataTransfer.files;
+                          for (var i = 0, f; f = files[i]; i++) {
+                              console.log('you dropped: ' + f.name);
+                              loadFile(f);
+                          }
+                      }
+                                        
+                      return false;
+                  });
+                  
+                } else {
+                  
+                  //no draganddrop support
+                  console.log('Boo - no support for draganddrop');
+                } 
+            });
+        </script>
+    </body>
+</html>
+</apex:page>
