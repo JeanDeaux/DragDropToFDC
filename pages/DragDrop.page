@@ -14,46 +14,55 @@
         <apex:includeScript value="{!URLFOR($Resource.Modernizr)}" />
 
         <style type="text/css">
-            #loading{
-                width: 25%;
-                float:left;
-            }
-            
-            #loading ul{
-                list-style:none;
+
+            #page{
+                width: 90%; /* 5% margin on both sides */
+                margin: 36px auto;
             }
 
             #dropTarget{
-              border: dashed 1px black;
-              height: 400px;
-              width: 50%;
-              margin:auto;
+              background-color: #fff;
+              border: 2px dashed #999;
               text-align: center;
             }
             
             #dropTarget p{
+                margin: 36px auto 36px auto;
+            }
+
+            #loading{
+                margin: 36px auto;
+            }
+
+            #loading ul{
+                list-style:none;
+            }
+
+            .hover{
+              border: dashed 2px red !important;   
             }
             
-            .hover{
-              border: dashed 1px red !important;   
-            }
             
         </style>
     </head>
     <body>
-        <section>
+        <section id='page'>
             <header>
                 <nav>
                 </nav>
             </header>
-            <div id="loading">
-                <ul id="fileList">
+            <article>
 
-                </ul>
-            </div>
-            <div id="dropTarget">
-                <p>Drop something here</p>
-            </div>
+                <div id="dropTarget">
+                    <p>Drop something here</p>
+                </div>
+
+                <div id="loading">
+                    <ul id="fileList">
+
+                    </ul>
+                </div>
+            </article>
             <footer>
             </footer>
         </section>

@@ -155,6 +155,10 @@ body, select, input, textarea {
   /* font-family: Georgia, serif;  */
 }
 
+body {
+    background-color: #DCDBD9;
+}
+
 /* Headers (h1, h2, etc) have no default font-size or margin; define those yourself */
 h1, h2, h3, h4, h5, h6 { font-weight: bold; }
 
