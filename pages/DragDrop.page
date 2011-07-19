@@ -66,7 +66,9 @@
             <footer>
             </footer>
         </section>
+
         
+
         <script src="../../soap/ajax/20.0/connection.js" type="text/javascript"></script>
         <script src="../../soap/ajax/20.0/apex.js" type="text/javascript"></script>
         <apex:includeScript value="https://ajax.googleapis.com/ajax/libs/jquery/1.6/jquery.min.js" />
@@ -77,17 +79,36 @@
             function log(msg){ 
                 try{ console.log(msg); }catch(x){} 
             }
-                    
+
+            function createProgressItem(f){
+
+                //lazy load our createProgressItem function
+                //if browser supports progress elements, then use them
+                //else show spinners
+
+                //Modernizr doesn't support progress elements yet,
+                //but is in this fork https://github.com/dpkendal/Modernizr
+                if ('value' in document.createElement('progress')){
+                    //supports HTML5 progress
+                    createProgressItem = function(f){
+                        return $("#fileList").append($('<li>'+f.name+' <progress class="progress"></progress></li>'));
+                    };
+                }
+                else {
+                    //no HTML5 progress
+                    createProgressItem = function(f){
+                        return $("#fileList").append($('<li>'+f.name+' <span class="progress"></span><img class="loading" src="{!URLFOR($Resource.LoadingImage)}" alt="loading" ></img></li>'));
+                    }
+                }
+                return createProgressItem(f);
+            }
+
             function loadFile(f){
                 
                 sforce.connection.sessionId = '{!$Api.Session_ID}'; 
 
+                var fileListItem = createProgressItem(f);
 
-                var fileList = $("#fileList");
-
-                var fileListItem = $('<li>'+f.name+' <span class="progress"></span><img class="loading" src="{!URLFOR($Resource.LoadingImage)}" alt="loading" ></img></li>');
-                fileList.append(fileListItem);
-                
                 var reader = new FileReader();
 
                 reader.onerror = function(evt){
@@ -147,25 +168,31 @@
                    
                 if (Modernizr.draganddrop) {
                   
-                  var target = $('#dropTarget');
-                  target.bind('dragover', function () { $(this).addClass('hover'); return false; });
-                  target.bind('dragend, dragleave', function () { $(this).removeClass('hover'); return false; });
-                  target.bind('drop', function (e) {
-                    
-                      $(this).removeClass('hover');
-                      e.preventDefault();
-                    
-                      if (window.File && window.FileList && window.FileReader){
-                          
+                    var target = $('#dropTarget');
+
+                    //when we drag something over the droptarget area, highlight it
+                    target.bind('dragover', function () { $(this).addClass('hover'); return false; });
+
+                    //when drag ends or leaves the droptarget area, unhighlight it
+                    target.bind('dragend, dragleave', function () { $(this).removeClass('hover'); return false; });
+
+                    //when something is dropped, this is where the magic happens
+                    target.bind('drop', function (e) {
+
+                        $(this).removeClass('hover');
+                        e.preventDefault();
+
+                        if (window.File && window.FileList && window.FileReader){
+
                           var files = e.originalEvent.dataTransfer.files;
                           for (var i = 0, f; f = files[i]; i++) {
                               console.log('you dropped: ' + f.name);
                               loadFile(f);
                           }
-                      }
-                                        
-                      return false;
-                  });
+                        }
+
+                        return false;
+                    });
                   
                 } else {
                   
